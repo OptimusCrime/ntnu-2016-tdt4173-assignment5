@@ -3,3 +3,9 @@
 .DS_Store
 
 *.pyc
+
+data/chars74k/*/*.jpg
+data/images/*.jpg
+data/pickled/*.chars74k-lite.gz
+
+logs/debug*.log
