@@ -1,14 +1,16 @@
-from models.base import BaseModel
+import logging
 
-from sklearn.neighbors import KNeighborsClassifier
+from load.pickling import pickle_data, unpickle_data
+from sklearn import neighbors
 
-class KNearestNeighborsModel(BaseModel):
+log = logging.getLogger(__name__)
 
-    def __init__(self):
+
+def k_nearest_neighbours(from_pickle=False):
+    log.info('Initiating kNN model')
+    if from_pickle:
         pass
+        # TODO: Return pickled model
 
-    def fit(self):
-        pass
+    return neighbors.KNeighborsClassifier()
 
-    def predict(self):
-        pass
