@@ -3,6 +3,7 @@ from logging.config import dictConfig
 from config.configuration import LOG_CONFIG
 
 from load.loader import Chars74KLoader
+from models.knn import KNearestNeighborsModel
 from ocr import OCR
 
 if __name__ == '__main__':
@@ -10,8 +11,9 @@ if __name__ == '__main__':
     dictConfig(LOG_CONFIG)
     log = logging.getLogger(__name__)
 
-    loader = Chars74KLoader({
-        'from_pickle': True
+    loader = Chars74KLoader(config={
+        'from_pickle': True,
+        'percent_to_test_data': 0.1
     })
 
-    ocr = OCR(loader)
+    ocr = OCR(model=KNearestNeighborsModel(), data_loader=loader)
