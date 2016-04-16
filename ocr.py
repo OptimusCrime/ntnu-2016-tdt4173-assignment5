@@ -26,4 +26,4 @@ class OCR(object):
         model.fit(training_data[0], training_data[1])
         result = model.predict(training_data[2])
 
-        print('%.2f percent correct' % (sum([1 if result[i] == training_data[3][i] else 0 for i in range(len(result))]) / len(result) * 100))
+        log.info('%.2f percent correct' % (sum([1 if result[i] == training_data[3][i] else 0 for i in range(len(result))]) / len(result) * 100))
