@@ -31,25 +31,19 @@ class ImageLoader(BaseLoader):
 
         # Get the actual images
         images = []
-        shapes = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
             if self.config['normalize']:
                 raw_image = raw_image / 255.0  # Normalize features by dividing
-            height = len(raw_image)
-            width = len(raw_image[0])
 
             # Add new image and reshape
-            images.append(raw_image.reshape(height * width))
-
-            # Store the shape
-            shapes.append((width, height))
+            images.append(raw_image)
 
         # Debug
         log.info('Loaded %i image(s) to recognize' % (len(images)))
 
         # Return the images and the shapes
-        return images, shapes
+        return images
 
     def get_files(self):
         image_paths = []

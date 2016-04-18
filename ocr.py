@@ -1,5 +1,6 @@
 import logging
 
+from extract_stuff import ExtractStuff
 from load.base import BaseLoader
 from preprocessing.base import BasePreprocessing
 
@@ -31,7 +32,6 @@ class OCR(object):
                     X_train = processing.process(X_train)
                     X_test = processing.process(X_test)
 
-
         """
         USE FOR SHOWING A SINGLE IMAGE (RESHAPES TO 2D)
         io.imageshow(np.reshape(training_data[0][0], (20, 20)))
@@ -48,7 +48,20 @@ class OCR(object):
 
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
-            image_data, image_shapes = image_data_loader.load()
+            # Load the images
+            images = image_data_loader.load()
+
+            # Get all the pieces
+            image_data = []
+
+            es = ExtractStuff()
+
+            # Loop the images and get fragments
+            for image in images:
+                image_data.append({
+                    'file_name': 'foobar',
+                    'original': image,
+                    'fragments': es.extract(image)
+                })
 
             print(image_data)
-            print(image_shapes)
