@@ -18,7 +18,7 @@ if __name__ == '__main__':
     log = logging.getLogger(__name__)
 
     training_loader = Chars74KLoader(config={
-        'from_pickle': False,
+        'from_pickle': True,
         'percent_to_train_data': 0.9
     })
 
@@ -27,11 +27,10 @@ if __name__ == '__main__':
     # model = svm(from_pickle=False)
 
     # Define the preprocessing
-    preprocessing = (NormalizePreprocessing(), BinaryPreprocessing())
+    preprocessing = (BinaryPreprocessing(),)
 
     # Loader for images/recognizer
     image_data_loader = ImageLoader(config={
-        'from_pickle': True
     })
 
     # Call the OCR
