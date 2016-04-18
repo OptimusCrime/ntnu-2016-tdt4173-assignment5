@@ -31,8 +31,7 @@ if __name__ == '__main__':
 
     # Loader for images/recognizer
     image_data_loader = ImageLoader(config={
-        'from_pickle': True,
-        'percent_to_train_data': 0.9
+        'from_pickle': True
     })
 
     # Call the OCR

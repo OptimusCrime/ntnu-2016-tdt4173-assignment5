@@ -41,10 +41,8 @@ class OCR(object):
         model.fit(X_train, y_train)
         result = model.predict(X_test)
 
-        log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
-
         if result is not None:
-            log.info('%.2f percent correct' % (sum([1 if result[i] == training_data[3][i] else 0 for i in range(len(result))]) / len(result) * 100))
+            log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
 
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
