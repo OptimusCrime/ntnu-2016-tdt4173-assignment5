@@ -2,6 +2,7 @@ import logging
 from logging.config import dictConfig
 from config.configuration import LOG_CONFIG
 
+from preprocessing.binary import BinaryPreprocessing
 from load.loader import Chars74KLoader
 from models.models import k_nearest_neighbours as knn
 from models.models import support_vector_machine as svm
@@ -17,6 +18,14 @@ if __name__ == '__main__':
         'percent_to_train_data': 0.9
     })
 
+    # Define the model
     # model = knn(from_pickle=False)
     model = svm(from_pickle=False)
-    ocr = OCR(model=model, data_loader=loader)
+
+    # Define the preprocessing
+    preprocessing = BinaryPreprocessing()
+
+    # Call the OCR
+    ocr = OCR(model=model,
+              data_loader=loader,
+              preprocessing=preprocessing)

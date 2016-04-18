@@ -64,10 +64,6 @@ class Chars74KLoader(BaseLoader):
         log.info('Loaded %i images of %s pixels' % (len(image_labels), self.config['img_size']))
         return dataset_tuple
 
-    def preprocess(self):
-        # TODO: Implement this
-        pass
-
     def split_data_set(self, vectors, labels):
         """
         Split data set into (X_train, y_train, X_test and y_test) using the
