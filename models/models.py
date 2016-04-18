@@ -21,5 +21,5 @@ def support_vector_machine(from_pickle=False):
         pass
         # TODO: Return pickled model
 
-    return svm.SVC(gamma=0.001)
+    return svm.SVC()
 

@@ -7,14 +7,25 @@ log = logging.getLogger(__name__)
 
 class OCR(object):
 
-    def __init__(self, model=None, data_loader=None):
+    def __init__(self, model=None, data_loader=None, preprocessing=None):
+        # Make sure we have a loader
         if not isinstance(data_loader, BaseLoader):
             raise ValueError('data_loader must be of type BaseLoader')
-        # TODO: Same as above for model?
+
+        # Logging
         log.info('Initiating OCR')
-        self.data_loader = data_loader  # Must be of type BaseLoader
+
+        # Set some variables
+        self.data_loader = data_loader
         self.model = model
-        training_data = self.data_loader.load()  # Returned as (X_train, y_train, X_test, y_test)
+
+        # Load the training data. Returned as (X_train, y_train, X_test, y_test)
+        training_data = self.data_loader.load()
+
+        # Check if any preprocessing was supplied. Run if supplied.
+        if preprocessing is not None:
+            training_data = preprocessing.process(training_data)
+
 
         """
         USE FOR SHOWING A SINGLE IMAGE (RESHAPES TO 2D)
