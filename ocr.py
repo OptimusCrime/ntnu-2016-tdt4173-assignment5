@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 from extract_stuff import ExtractStuff
 from load.base import BaseLoader
@@ -38,7 +39,12 @@ class OCR(object):
         io.show()
         """
 
+        # Fit the model, aka training
+        log.info('Begin train')
         model.fit(X_train, y_train)
+
+        # Predict on the training set
+        log.info('Begin predicting')
         result = model.predict(X_test)
 
         if result is not None:
@@ -47,7 +53,13 @@ class OCR(object):
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
             # Load the images
-            images = image_data_loader.load()
+            images, paths = image_data_loader.load()
+            np.set_printoptions(threshold=np.inf)
+
+            if isinstance(preprocessing, tuple):
+                for processing in preprocessing:
+                    if isinstance(processing, BasePreprocessing):
+                        images = processing.process(images)
 
             # Get all the pieces
             image_data = []
@@ -55,11 +67,30 @@ class OCR(object):
             es = ExtractStuff()
 
             # Loop the images and get fragments
-            for image in images:
+            for i in range(len(images)):
+                # Shortcut images
+                image = images[i]
+
+                # Get the fragments
+                log.info('Get fragments from image number %i.' % (i + 1))
+                fragments, locations = es.extract(image)
+                log.info('Got %i fragments from image number %i' % (len(fragments), (i + 1)))
+
+                # Try to predict
+                log.info('Predict on fragments')
+                result = model.predict(fragments)
+                print('do')
+                print((result))
+
+                result = model.predict_proba(fragments)
+                print(list(result))
+
+
+                '''
                 image_data.append({
                     'file_name': 'foobar',
                     'original': image,
                     'fragments': es.extract(image)
-                })
+                })'''
 
-            print(image_data)
+            #print(image_data)

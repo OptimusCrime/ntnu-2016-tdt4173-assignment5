@@ -33,8 +33,6 @@ class ImageLoader(BaseLoader):
         images = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-            if self.config['normalize']:
-                raw_image = raw_image / 255.0  # Normalize features by dividing
 
             # Add new image and reshape
             images.append(raw_image)
@@ -43,7 +41,7 @@ class ImageLoader(BaseLoader):
         log.info('Loaded %i image(s) to recognize' % (len(images)))
 
         # Return the images and the shapes
-        return images
+        return images, image_paths
 
     def get_files(self):
         image_paths = []

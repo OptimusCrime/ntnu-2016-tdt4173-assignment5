@@ -54,6 +54,7 @@ class Chars74KLoader(BaseLoader):
         all_labels = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
+            raw_image = raw_image / 255.0
             image_vectors.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
             all_labels.append(image_labels[index])
             if self.config['extend_data_set']:
