@@ -3,7 +3,7 @@ from logging.config import dictConfig
 from config.configuration import LOG_CONFIG
 
 from load.loader import Chars74KLoader
-
+from load.image_load import ImageLoader
 from models.models import k_nearest_neighbours as knn
 from models.models import support_vector_machine as svm
 
@@ -17,7 +17,7 @@ if __name__ == '__main__':
     dictConfig(LOG_CONFIG)
     log = logging.getLogger(__name__)
 
-    loader = Chars74KLoader(config={
+    training_loader = Chars74KLoader(config={
         'from_pickle': False,
         'percent_to_train_data': 0.9
     })
@@ -29,7 +29,14 @@ if __name__ == '__main__':
     # Define the preprocessing
     preprocessing = (NormalizePreprocessing(), BinaryPreprocessing())
 
+    # Loader for images/recognizer
+    image_data_loader = ImageLoader(config={
+        'from_pickle': True,
+        'percent_to_train_data': 0.9
+    })
+
     # Call the OCR
     ocr = OCR(model=model,
-              data_loader=loader,
-              preprocessing=preprocessing)
+              training_data_loader=training_loader,
+              preprocessing=preprocessing,
+              image_data_loader=image_data_loader)

@@ -10,10 +10,3 @@ class BaseLoader(object):
         Method that should initiate loading and return data set
         :return Data set
         """
-
-    @abc.abstractmethod
-    def preprocess(self):
-        """
-        Method that should preprocess the dataset
-        :return: Preprocessed dataset
-        """
