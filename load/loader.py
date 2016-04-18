@@ -19,7 +19,7 @@ CHARS74KLOADER_BASE_CONFIG = {
     'percent_to_train_data': 0.9,
     'img_size': (20, 20),
     'images': 7112,
-    'normalize': True,
+    'extend_data_set': True,
     'from_pickle': False
 }
 
@@ -54,17 +54,13 @@ class Chars74KLoader(BaseLoader):
         all_labels = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-            shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
-
-            if self.config['normalize']:
-                raw_image = raw_image / 255.0  # Normalize features by dividing
-                shifted_images = [i / 255.0 for i in shifted_images]
-
             image_vectors.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
             all_labels.append(image_labels[index])
-            for image in shifted_images:
-                image_vectors.append(image.reshape((self.config['img_size'][0] ** 2)))
-                all_labels.append(image_labels[index])
+            if self.config['extend_data_set']:
+                shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
+                for image in shifted_images:
+                    image_vectors.append(image.reshape((self.config['img_size'][0] ** 2)))
+                    all_labels.append(image_labels[index])
             # image_vectors[index] = raw_image.reshape(self.config['img_size'][0] ** 2)  # Reshape to 1D vector of length 20^2
         # Split data set into (X_train, y_train, X_test and y_test)
         image_vectors = np.array(image_vectors)

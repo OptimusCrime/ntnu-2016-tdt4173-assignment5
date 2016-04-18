@@ -2,10 +2,14 @@ import logging
 from logging.config import dictConfig
 from config.configuration import LOG_CONFIG
 
-from preprocessing.binary import BinaryPreprocessing
 from load.loader import Chars74KLoader
+
 from models.models import k_nearest_neighbours as knn
 from models.models import support_vector_machine as svm
+
+from preprocessing.binary import BinaryPreprocessing
+from preprocessing.normalize import NormalizePreprocessing
+
 from ocr import OCR
 
 if __name__ == '__main__':
@@ -14,7 +18,7 @@ if __name__ == '__main__':
     log = logging.getLogger(__name__)
 
     loader = Chars74KLoader(config={
-        'from_pickle': True,
+        'from_pickle': False,
         'percent_to_train_data': 0.9
     })
 
@@ -23,7 +27,7 @@ if __name__ == '__main__':
     # model = svm(from_pickle=False)
 
     # Define the preprocessing
-    preprocessing = BinaryPreprocessing()
+    preprocessing = (NormalizePreprocessing(), BinaryPreprocessing())
 
     # Call the OCR
     ocr = OCR(model=model,

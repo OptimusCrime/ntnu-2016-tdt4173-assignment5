@@ -1,6 +1,7 @@
 import logging
 
 from load.base import BaseLoader
+from preprocessing.base import BasePreprocessing
 
 log = logging.getLogger(__name__)
 
@@ -20,11 +21,15 @@ class OCR(object):
         self.model = model
 
         # Load the training data. Returned as (X_train, y_train, X_test, y_test)
-        training_data = self.data_loader.load()
+        X_train, y_train, X_test, y_test = self.data_loader.load()
 
         # Check if any preprocessing was supplied. Run if supplied.
-        if preprocessing is not None:
-            training_data = preprocessing.process(training_data)
+        if isinstance(preprocessing, tuple):
+            for processing in preprocessing:
+                if isinstance(processing, BasePreprocessing):
+                    log.info('Preprocessing data with %s technique' % type(processing))
+                    X_train = processing.process(X_train)
+                    X_test = processing.process(X_test)
 
 
         """
@@ -34,7 +39,7 @@ class OCR(object):
         """
 
         # Test with kNN
-        model.fit(training_data[0], training_data[1])
-        result = model.predict(training_data[2])
+        model.fit(X_train, y_train)
+        result = model.predict(X_test)
 
-        log.info('%.2f percent correct' % (sum([1 if result[i] == training_data[3][i] else 0 for i in range(len(result))]) / len(result) * 100))
+        log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
