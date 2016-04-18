@@ -9,6 +9,7 @@ from models.models import support_vector_machine as svm
 
 from preprocessing.binary import BinaryPreprocessing
 from preprocessing.normalize import NormalizePreprocessing
+from preprocessing.hog import HogPreprocessing
 
 from ocr import OCR
 

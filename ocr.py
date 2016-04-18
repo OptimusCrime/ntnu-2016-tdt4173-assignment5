@@ -29,7 +29,7 @@ class OCR(object):
         if isinstance(preprocessing, tuple):
             for processing in preprocessing:
                 if isinstance(processing, BasePreprocessing):
-                    log.info('Preprocessing data with %s technique' % type(processing))
+                    log.info('Preprocessing data with %s technique' % repr(processing))
                     X_train = processing.process(X_train)
                     X_test = processing.process(X_test)
 
@@ -39,12 +39,10 @@ class OCR(object):
         io.show()
         """
 
-        # Fit the model, aka training
-        log.info('Begin train')
+        # Test with kNN
+        log.info('Fitting model')
         model.fit(X_train, y_train)
-
-        # Predict on the training set
-        log.info('Begin predicting')
+        log.info('Predicting test set')
         result = model.predict(X_test)
 
         if result is not None:
