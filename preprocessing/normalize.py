@@ -18,3 +18,6 @@ class NormalizePreprocessing(BasePreprocessing):
             normalized_images.append(image / self.normalize_value)
 
         return np.array(normalized_images)
+
+    def __repr__(self):
+        return 'NormalizeProcessing'

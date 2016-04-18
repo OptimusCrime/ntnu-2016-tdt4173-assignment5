@@ -46,3 +46,6 @@ class BinaryPreprocessing(BasePreprocessing):
                 output.append(image)
 
         return output
+
+    def __repr__(self):
+        return 'BinaryProcessing'
