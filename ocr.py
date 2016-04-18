@@ -1,6 +1,9 @@
 import logging
 import numpy as np
 
+from PIL import Image
+from PIL import ImageDraw
+
 from extract_stuff import ExtractStuff
 from load.base import BaseLoader
 from preprocessing.base import BasePreprocessing
@@ -78,13 +81,36 @@ class OCR(object):
 
                 # Try to predict
                 log.info('Predict on fragments')
-                result = model.predict(fragments)
-                print('do')
-                print((result))
+                results = model.predict_proba(fragments)
 
-                result = model.predict_proba(fragments)
-                print(list(result))
+                # Open image
+                im = Image.open(paths[i])
 
+                # Draw
+                dr = ImageDraw.Draw(im)
+
+                # Loop each of the results
+                for j in range(len(results)):
+                    # Find the maximum value
+                    max_value = results[j].max()
+
+                    # Check if the maximum value is above the threshold
+                    if max_value >= 0.9:
+                        # Get the letter
+                        letter_index = np.argmax(results[j])
+
+                        print("Letter = " + str(letter_index))
+                        #print("Location = " + locations[j])
+
+                        dr.rectangle(((locations[j][0], locations[j][1]), (
+                                      locations[j][0] + 20, locations[j][1] + 20)), outline = "blue")
+
+
+                # Get save path
+                save_path_split = paths[i].split('.')
+                save_path_split_clean = save_path_split[0] + '_output.' + save_path_split[1]
+
+                im.save(save_path_split_clean, "JPEG")
 
                 '''
                 image_data.append({
