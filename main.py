@@ -38,5 +38,7 @@ if __name__ == '__main__':
               preprocessing=pre_processing,
               image_data_loader=image_data_loader,
               config={
-                  'do_initial_prediction': True
+                  'do_initial_prediction': False,
+                  'prediction_threshold': 0.85,
+                  'window_content': 80,
               })
