@@ -13,7 +13,8 @@ log = logging.getLogger(__name__)
 OCR_BASE_CONFIG = {
     'window_size': (20, 20),
     'sliding_window_step_size': 4,
-    'prediction_threshold': 0.9
+    'prediction_threshold': 0.8,
+    'window_content': 70
 }
 
 
@@ -56,7 +57,6 @@ class OCR(object):
         model.fit(X_train, y_train)
         log.info('Predicting test set of size: %i' % len(X_test))
         result = model.predict(X_test)
-        # result = None
 
         if result is not None:
             log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
@@ -65,7 +65,6 @@ class OCR(object):
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
             # Load the images
             images, paths = image_data_loader.load()
-            np.set_printoptions(threshold=np.inf)
 
             if isinstance(preprocessing, list):
                 for processing in preprocessing:
@@ -89,7 +88,7 @@ class OCR(object):
                         continue
 
                     # HERE WE EXECUTE PREDICT ON WINDOW
-                    if np.count_nonzero(window) > 0 and np.count_nonzero(window) > 80:
+                    if np.count_nonzero(window) > 0 and np.count_nonzero(window) >= self.config['window_content']:
                         result = model.predict_proba([window.reshape((400, ))])
                         max_value = result[0].max()
                         if max_value >= self.config['prediction_threshold']:
@@ -103,7 +102,7 @@ class OCR(object):
                 save_path_split = paths[i].split('.')
                 save_path_split_clean = save_path_split[0] + '_output.' + save_path_split[1]
                 im.save(save_path_split_clean, "JPEG")
-                log.info('Got the following classifications: %s' % [i[0] for i in classifications])
+                log.info('Got the following classifications (%i): %s' % (len(classifications), [i[0] for i in classifications]))
 
 
     @staticmethod
