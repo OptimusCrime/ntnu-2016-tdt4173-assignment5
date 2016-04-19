@@ -13,7 +13,7 @@ def k_nearest_neighbours(from_pickle=False):
         pass
         # TODO: Return pickled model
 
-    return neighbors.KNeighborsClassifier()
+    return neighbors.KNeighborsClassifier(n_neighbors=5)
 
 def support_vector_machine(from_pickle=False):
     log.info('Initiation SVM model')

@@ -1,5 +1,7 @@
 import logging
 import os
+import numpy as np
+
 from skimage import io
 
 from load.base import BaseLoader
@@ -33,10 +35,10 @@ class ImageLoader(BaseLoader):
         images = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-
-            # Add new image and reshape
+            if raw_image.dtype == np.uint8:
+                raw_image = raw_image / 255.0
             images.append(raw_image)
-
+            # Add new image and reshape
         # Debug
         log.info('Loaded %i image(s) to recognize' % (len(images)))
 

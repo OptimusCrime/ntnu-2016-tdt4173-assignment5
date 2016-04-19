@@ -9,7 +9,7 @@ from models.models import support_vector_machine as svm
 
 from preprocessing.binary import BinaryPreprocessing
 from preprocessing.normalize import NormalizePreprocessing
-from preprocessing.hog import HogPreprocessing
+from preprocessing.hog import DenoisePreprocessing
 
 from ocr import OCR
 
@@ -28,14 +28,13 @@ if __name__ == '__main__':
     # model = svm(from_pickle=False)
 
     # Define the preprocessing
-    preprocessing = (HogPreprocessing(), )
+    pre_processing = [BinaryPreprocessing()]
 
     # Loader for images/recognizer
-    image_data_loader = ImageLoader(config={
-    })
+    image_data_loader = ImageLoader(config={})
 
     # Call the OCR
     ocr = OCR(model=model,
               training_data_loader=training_loader,
-              preprocessing=preprocessing,
+              preprocessing=pre_processing,
               image_data_loader=image_data_loader)
