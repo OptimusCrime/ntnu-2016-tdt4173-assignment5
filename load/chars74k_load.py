@@ -3,12 +3,11 @@ import os
 import numpy as np
 import glob
 import time
+from math import floor
+from datetime import datetime
 
 from skimage import io
 from skimage.util import random_noise
-
-from datetime import datetime
-from math import floor
 
 from load.pickling import pickle_data, unpickle_data
 from load.base import BaseLoader
@@ -23,32 +22,31 @@ CHARS74K_LOADER_BASE_CONFIG = {
     'images': 7112,
     'extend_data_set': True,
     'from_pickle': False,
-    'noise_types': ['s&p', 'gaussian', 'poisson']  # Salt&Pepper, Gaussian, Poisson
+    'noise_types': ('s&p', 'gaussian', 'poisson')  # Salt&Pepper, Gaussian, Poisson
 }
 
 
 class Chars74KLoader(BaseLoader):
     """
     Class for loading Chars74K data set
-    TODO: Add functionality for data augmentation
-    TODO: The data set should maybe return train and test data?
     """
     def __init__(self, config=CHARS74K_LOADER_BASE_CONFIG):
         self.root_directory = os.path.abspath('data/chars74k-lite')
         self.config = CHARS74K_LOADER_BASE_CONFIG
         self.config.update(config)
+        self._log = logging.getLogger(__name__)
 
     def load(self):
-        log.info('Initiating load of Chars74K data set')
+        self._log.info('Initiating load of Chars74K data set')
         # If from_pickle, then load the data from pickled file
         # Create pickled file otherwise
         if self.config['from_pickle']:
             data = self.load_data_set_from_pickle()
             if data:
-                log.info('Loaded %i images of %s pixels from pickled file' % (len(data[0]) + len(data[2]), self.config['img_size']))
+                self._log.info('Loaded %i images of %s pixels from pickled file' % (len(data[0]) + len(data[2]), self.config['img_size']))
                 return data  # Tuple of (NP_Array(Vectors) / Array(Labels))
             else:
-                log.error('Unable to load pickled file, getting default data instead')
+                self._log.error('Unable to load pickled file, getting default data instead')
 
         image_paths, image_labels = self.get_all_image_paths()
         image_matrices = []

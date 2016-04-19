@@ -19,7 +19,7 @@ if __name__ == '__main__':
 
     # Loader for training set
     training_loader = Chars74KLoader(config={
-        'from_pickle': True,
+        'from_pickle': False,
         'percent_to_train_data': 0.8
     })
 

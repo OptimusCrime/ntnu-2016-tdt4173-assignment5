@@ -1,12 +1,8 @@
 import logging
 import os
 import numpy as np
-
 from skimage import io
-
 from load.base import BaseLoader
-
-log = logging.getLogger(__name__)
 
 IMAGE_LOADER_BASE_CONFIG = {
     'normalize': True,
@@ -22,9 +18,10 @@ class ImageLoader(BaseLoader):
         self.root_directory = os.path.abspath('data/images')
         self.config = IMAGE_LOADER_BASE_CONFIG
         self.config.update(config)
+        self._log = logging.getLogger(__name__)
 
     def load(self):
-        log.info('Initiating load of images to recognize')
+        self._log.info('Initiating load of images to recognize')
 
         # Get all paths
         image_paths = self.get_files()
@@ -38,7 +35,7 @@ class ImageLoader(BaseLoader):
             images.append(raw_image)
             # Add new image and reshape
         # Debug
-        log.info('Loaded %i image(s) to recognize' % (len(images)))
+        self._log.info('Loaded %i image(s) to recognize' % (len(images)))
 
         # Return the images and the shapes
         return images, image_paths
