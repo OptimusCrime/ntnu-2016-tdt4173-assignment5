@@ -1,9 +1,8 @@
-
 import numpy as np
 from .base import BasePreprocessing
 
 
-class BinaryPreprocessing(BasePreprocessing):
+class BinaryProcessing(BasePreprocessing):
 
     def process(self, dataset):
         if dataset is None:

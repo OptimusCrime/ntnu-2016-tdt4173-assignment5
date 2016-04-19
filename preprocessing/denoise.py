@@ -1,8 +1,7 @@
 import numpy as np
+from skimage.restoration import denoise_tv_chambolle
 
 from .base import BasePreprocessing
-
-from skimage.restoration import denoise_tv_chambolle
 
 
 class DenoiseProcessing(BasePreprocessing):

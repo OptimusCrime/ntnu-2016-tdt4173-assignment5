@@ -3,7 +3,7 @@ import numpy as np
 from .base import BasePreprocessing
 
 
-class NormalizePreprocessing(BasePreprocessing):
+class NormalizeProcessing(BasePreprocessing):
 
     def __init__(self, normalize_value=255.0):
         self.normalize_value = normalize_value

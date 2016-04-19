@@ -8,7 +8,7 @@ from load.base import BaseLoader
 
 log = logging.getLogger(__name__)
 
-IMAGELOADER_BASE_CONFIG = {
+IMAGE_LOADER_BASE_CONFIG = {
     'normalize': True,
     'from_pickle': False
 }
@@ -17,12 +17,10 @@ IMAGELOADER_BASE_CONFIG = {
 class ImageLoader(BaseLoader):
     """
     Class for loading Image
-    TODO: Add functionality for data augmentation
-    TODO: The data set should maybe return train and test data?
     """
-    def __init__(self, config=IMAGELOADER_BASE_CONFIG):
+    def __init__(self, config=IMAGE_LOADER_BASE_CONFIG):
         self.root_directory = os.path.abspath('data/images')
-        self.config = IMAGELOADER_BASE_CONFIG
+        self.config = IMAGE_LOADER_BASE_CONFIG
         self.config.update(config)
 
     def load(self):

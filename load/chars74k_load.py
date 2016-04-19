@@ -17,13 +17,13 @@ log = logging.getLogger(__name__)
 
 __pickled_data_directory__ = os.path.join('.', 'data', 'pickled')
 
-CHARS74KLOADER_BASE_CONFIG = {
+CHARS74K_LOADER_BASE_CONFIG = {
     'percent_to_train_data': 0.8,
     'img_size': (20, 20),
     'images': 7112,
     'extend_data_set': True,
     'from_pickle': False,
-    'noise_types': ['s&p', 'gaussian', 'poisson']
+    'noise_types': ['s&p', 'gaussian', 'poisson']  # Salt&Pepper, Gaussian, Poisson
 }
 
 
@@ -33,9 +33,9 @@ class Chars74KLoader(BaseLoader):
     TODO: Add functionality for data augmentation
     TODO: The data set should maybe return train and test data?
     """
-    def __init__(self, config=CHARS74KLOADER_BASE_CONFIG):
+    def __init__(self, config=CHARS74K_LOADER_BASE_CONFIG):
         self.root_directory = os.path.abspath('data/chars74k-lite')
-        self.config = CHARS74KLOADER_BASE_CONFIG
+        self.config = CHARS74K_LOADER_BASE_CONFIG
         self.config.update(config)
 
     def load(self):
@@ -73,11 +73,11 @@ class Chars74KLoader(BaseLoader):
                     all_labels.append(image_labels[index])
 
         # Split data set into (X_train, y_train, X_test and y_test)
-        dataset_tuple = self.split_data_set(image_matrices, all_labels)
+        data_set_tuple = self.split_data_set(image_matrices, all_labels)
 
-        self.save_data_set_to_pickle(dataset_tuple)
+        self.save_data_set_to_pickle(data_set_tuple)
         log.info('Loaded %i images of %s pixels' % (len(all_labels), self.config['img_size']))
-        return dataset_tuple
+        return data_set_tuple
 
     def split_data_set(self, vectors, labels):
         """
@@ -124,7 +124,6 @@ class Chars74KLoader(BaseLoader):
 
         pickle_data(payload, filename)
         log.debug('Saved data set to file: %s' % filename)
-
 
     @staticmethod
     def load_data_set_from_pickle(filename=None):

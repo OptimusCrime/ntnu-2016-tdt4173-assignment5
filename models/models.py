@@ -15,6 +15,7 @@ def k_nearest_neighbours(from_pickle=False):
 
     return neighbors.KNeighborsClassifier(n_neighbors=5)
 
+
 def support_vector_machine(from_pickle=False):
     log.info('Initiation SVM model')
     if from_pickle:

@@ -13,8 +13,9 @@ log = logging.getLogger(__name__)
 OCR_BASE_CONFIG = {
     'window_size': (20, 20),
     'sliding_window_step_size': 4,
-    'prediction_threshold': 0.8,
-    'window_content': 70
+    'prediction_threshold': 0.9,
+    'window_content': 90,
+    'do_initial_prediction': True
 }
 
 
@@ -46,20 +47,16 @@ class OCR(object):
                     X_train = processing.process(X_train)
                     X_test = processing.process(X_test)
 
-        """
-        USE FOR SHOWING A SINGLE IMAGE (RESHAPES TO 2D)
-        io.imageshow(np.reshape(training_data[0][0], (20, 20)))
-        io.show()
-        """
-
-        # Test with kNN
+        # Train the model
         log.info('Fitting model')
         model.fit(X_train, y_train)
-        log.info('Predicting test set of size: %i' % len(X_test))
-        result = model.predict(X_test)
 
-        if result is not None:
-            log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
+        # To a prediction to get correctness of model
+        if self.config['do_initial_prediction']:
+            log.info('Predicting test set of size: %i' % len(X_test))
+            result = model.predict(X_test)
+            if result is not None:
+                log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
 
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
@@ -81,13 +78,13 @@ class OCR(object):
                 im = Image.open(paths[i])
                 dr = ImageDraw.Draw(im)
 
-                # Get the fragments
+                # Get the fragments / sub-windows
                 log.info('Get fragments from image number %i.' % (i + 1))
                 for (y, x, window) in self.sliding_window(image, step_size=self.config['sliding_window_step_size'], window_size=self.config['window_size']):
                     if window.shape[0] != self.config['window_size'][1] or window.shape[1] != self.config['window_size'][0]:
                         continue
 
-                    # HERE WE EXECUTE PREDICT ON WINDOW
+                    # Here we execute the
                     if np.count_nonzero(window) > 0 and np.count_nonzero(window) >= self.config['window_content']:
                         result = model.predict_proba([window.reshape((400, ))])
                         max_value = result[0].max()
