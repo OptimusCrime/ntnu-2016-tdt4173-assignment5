@@ -7,5 +7,6 @@
 data/chars74k/*/*.jpg
 data/images/*.jpg
 data/pickled/*.chars74k-lite.gz
+data/*.jpg
 
 logs/debug*.log

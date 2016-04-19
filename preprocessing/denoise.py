@@ -5,7 +5,7 @@ from .base import BasePreprocessing
 from skimage.restoration import denoise_tv_chambolle
 
 
-class DenoisePreprocessing(BasePreprocessing):
+class DenoiseProcessing(BasePreprocessing):
 
     def process(self, dataset):
         if dataset is None:
