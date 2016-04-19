@@ -17,10 +17,14 @@ if __name__ == '__main__':
     dictConfig(LOG_CONFIG)
     log = logging.getLogger(__name__)
 
+    # Loader for training set
     training_loader = Chars74KLoader(config={
-        'from_pickle': False,
+        'from_pickle': True,
         'percent_to_train_data': 0.8
     })
+
+    # Loader for images/recognizer
+    image_data_loader = ImageLoader()
 
     # Define the model
     # model = svm()
@@ -28,9 +32,6 @@ if __name__ == '__main__':
 
     # Define the pre-processing
     pre_processing = [DenoiseProcessing(), BinaryProcessing()]
-
-    # Loader for images/recognizer
-    image_data_loader = ImageLoader()
 
     # Call the OCR
     ocr = OCR(model=model,
@@ -40,5 +41,5 @@ if __name__ == '__main__':
               config={
                   'do_initial_prediction': False,
                   'prediction_threshold': 0.85,
-                  'window_content': 80,
+                  'window_content': 10,
               })

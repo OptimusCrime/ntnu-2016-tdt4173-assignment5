@@ -44,6 +44,10 @@ class ImageLoader(BaseLoader):
         return images, image_paths
 
     def get_files(self):
+        """
+        Returns all possible images to perform recognition on
+        :return: Paths for every image
+        """
         image_paths = []
         for directory_name, subdirectory_list, file_list in os.walk(self.root_directory):
             for file_name in file_list:

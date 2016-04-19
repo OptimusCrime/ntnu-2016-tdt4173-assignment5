@@ -84,9 +84,9 @@ class Chars74KLoader(BaseLoader):
         Split data set into (X_train, y_train, X_test and y_test) using the
         percent_as_test_data value.
         Return it as a tuple (X_train, y_train, X_test and y_test)
-        :param vectors:
-        :param labels:
-        :return:
+        :param vectors: A list of images
+        :param labels: A list of labels
+        :return: Splitted  data
         """
         num_of_images = len(vectors)
         num_of_train_data = floor(self.config['percent_to_train_data'] * num_of_images)
@@ -114,29 +114,32 @@ class Chars74KLoader(BaseLoader):
         return image_paths, image_labels
 
     @staticmethod
-    def save_data_set_to_pickle(payload, filename=None):
+    def save_data_set_to_pickle(pay_load, file_name=None):
         """
         Saves data to a GZipped binary dump of the data set
+        :param file_name:
+        :param pay_load:
         """
-        if not filename:
-            filename = '%s%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
-            filename = os.path.join(__pickled_data_directory__, filename)
+        if not file_name:
+            file_name = '%s%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
+            file_name = os.path.join(__pickled_data_directory__, file_name)
 
-        pickle_data(payload, filename)
-        log.debug('Saved data set to file: %s' % filename)
+        pickle_data(pay_load, file_name)
+        log.debug('Saved data set to file: %s' % file_name)
 
     @staticmethod
-    def load_data_set_from_pickle(filename=None):
+    def load_data_set_from_pickle(file_name=None):
         """
         Loads data from a GZipped binary dump of the data set
         Takes thw newest if no file name is provided
+        :param file_name:
         """
-        if not filename:
+        if not file_name:
             try:
-                filename = max(glob.glob(os.path.join(__pickled_data_directory__, '*.chars74k-lite.gz')), key=os.path.getctime)
+                file_name = max(glob.glob(os.path.join(__pickled_data_directory__, '*.chars74k-lite.gz')), key=os.path.getctime)
             except ValueError as e:
                 log.error('Unable to load data set from file since no pickled files could be found, ')
                 return None
 
-        log.debug('Loading data set from file: %s' % filename)
-        return unpickle_data(filename)
+        log.debug('Loading data set from file: %s' % file_name)
+        return unpickle_data(file_name)

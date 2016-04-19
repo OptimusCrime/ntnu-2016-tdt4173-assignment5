@@ -24,13 +24,15 @@ class OCR(object):
     def __init__(self, model=None, training_data_loader=None, preprocessing=None, image_data_loader=None, config=OCR_BASE_CONFIG):
         # Make sure we have a loader
         if not isinstance(training_data_loader, BaseLoader):
-            raise ValueError('training_data_loader must be of type BaseLoader')
+            raise ValueError('"training_data_loader" must be of type BaseLoader')
+
+        if not model:
+            raise ValueError('"model" cannot be None')
 
         log.info('Initiating OCR')
 
         self.config = OCR_BASE_CONFIG
         self.config.update(config)
-        # Logging
 
         # Set some variables
         self.training_data_loader = training_data_loader
@@ -39,11 +41,11 @@ class OCR(object):
         # Load the training data. Returned as (X_train, y_train, X_test, y_test)
         X_train, y_train, X_test, y_test = self.training_data_loader.load()
 
-        # Check if any preprocessing was supplied. Run if supplied.
+        # Check if any pre-processing was supplied. Run if supplied.
         if isinstance(preprocessing, list):
             for processing in preprocessing:
                 if isinstance(processing, BasePreprocessing):
-                    log.info('Pre-processing data with %s technique' % repr(processing))
+                    log.info('Pre-processing data set with %s technique' % repr(processing))
                     X_train = processing.process(X_train)
                     X_test = processing.process(X_test)
 
@@ -101,9 +103,15 @@ class OCR(object):
                 im.save(save_path_split_clean, "JPEG")
                 log.info('Got the following classifications (%i): %s' % (len(classifications), [i[0] for i in classifications]))
 
-
     @staticmethod
     def image_pyramid_down(image, downscale=1.5, min_size=(30, 30)):
+        """
+        Method to downscale images and yield scaled images down to the provided min_size
+        :param image: Image to downscale
+        :param downscale: Downscale factor
+        :param min_size: Minimum image size
+        :return: Generator with scaled images
+        """
         for (i, resized) in enumerate(pyramid_gaussian(image, downscale=downscale)):
             if resized.shape[0] < min_size[1] or resized.shape[1] < min_size[0]:
                 break
@@ -111,11 +119,14 @@ class OCR(object):
             yield i, resized
 
     @staticmethod
-    def image_pyramid_up(image, upscale=1.5, max_size=(1200, 1200)):
-        pass
-
-    @staticmethod
     def sliding_window(image, step_size, window_size):
+        """
+        Method to return fragments of image, given window_size and step_size
+        :param image: The image to perform sliding on
+        :param step_size: How large incrementation one iteration should be
+        :param window_size: The wanted window size
+        :return: Generator with windows/fragments
+        """
         log.debug('Sliding image of size: %s with step: %s' % (str(image.shape), str(step_size)))
         for y in range(0, image.shape[0], step_size):
             for x in range(0, image.shape[1], step_size):
