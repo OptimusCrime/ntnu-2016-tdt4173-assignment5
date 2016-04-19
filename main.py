@@ -24,7 +24,7 @@ if __name__ == '__main__':
     })
 
     # Define the model
-    model = knn(from_pickle=False)
+    model = svm(from_pickle=False)
     # model = svm(from_pickle=False)
 
     # Define the preprocessing

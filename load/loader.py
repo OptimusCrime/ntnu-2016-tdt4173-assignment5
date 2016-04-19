@@ -16,7 +16,7 @@ log = logging.getLogger(__name__)
 __pickled_data_directory__ = os.path.join('.', 'data', 'pickled')
 
 CHARS74KLOADER_BASE_CONFIG = {
-    'percent_to_train_data': 0.9,
+    'percent_to_train_data': 0.8,
     'img_size': (20, 20),
     'images': 7112,
     'extend_data_set': True,

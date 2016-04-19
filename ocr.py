@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 OCR_BASE_CONFIG = {
     'window_size': (20, 20),
     'sliding_window_step_size': 4,
-    'prediction_threshold': 0.5,
-    'window_content': 60
+    'prediction_threshold': 0.8,
+    'window_content': 70
 }
 
 
