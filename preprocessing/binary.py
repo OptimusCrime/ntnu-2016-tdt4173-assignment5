@@ -5,27 +5,21 @@ from .base import BasePreprocessing
 
 class BinaryPreprocessing(BasePreprocessing):
 
-    def process(self, dataset, shape=None):
+    def process(self, dataset):
         if dataset is None:
             return None
 
         # Loop each image in the dataset
-        output = []
         for i in range(len(dataset)):
-            image = None
 
-            reshape = False
-            shape = None
+            old_shape = None
             if len(dataset[i].shape) > 1:
-                reshape = True
-                shape = dataset[i].shape
+                old_shape = dataset[i].shape
+                dataset[i] = dataset[i].reshape(((old_shape[0] * old_shape[1]), ))
 
-                image = dataset[i].reshape(((shape[0] * shape[1]),))
-            else:
-                image = dataset[i]
 
             # Find the average color in the dataset
-            average_value = np.average(image)
+            average_value = np.average(dataset[i])
 
             # If the average value is over 0.5 we have more black than white and we should negate the values
             negate = False
@@ -33,19 +27,18 @@ class BinaryPreprocessing(BasePreprocessing):
                 negate = True
 
             # Loop each pixel value in the image
-            for j in range(len(image)):
+            for j in range(len(dataset[i])):
                 # Binary
                 if negate:
-                    image[j] = 1 if image[j] <= 0.5 else 0
+                    dataset[i][j] = 1 if dataset[i][j] <= 0.50 else 0
                 else:
-                    image[j] = 0 if image[j] <= 0.5 else 1
+                    dataset[i][j] = 0 if dataset[i][j] <= 0.50 else 1
 
-            if reshape:
-                output.append(image.reshape(shape))
-            else:
-                output.append(image)
+            if old_shape is not None:
+                dataset[i] = dataset[i].reshape((old_shape[0], old_shape[1]))
 
-        return output
+        # Return the final list of images
+        return dataset
 
     def __repr__(self):
         return 'BinaryProcessing'

@@ -11,14 +11,22 @@ class DenoisePreprocessing(BasePreprocessing):
         if dataset is None:
             return None
 
-        processed_images = []
+        # Loop each image in the dataset
+        for i in range(len(dataset)):
+            # Run the denoise method
+            old_shape = None
+            if len(dataset[i].shape) == 1:
+                old_shape = dataset[i].shape
+                dataset[i] = denoise_tv_chambolle(dataset[i].reshape((20, 20)), weight=0.1)
+            else:
+                dataset[i] = denoise_tv_chambolle(dataset[i], weight=0.1)
 
-        for image in range(len(dataset)):
-            img = dataset[image]
-            img = denoise_tv_chambolle(img, weight=0.1)
-            processed_images.append(img)
+            # Reshape image to 1d 400 array
+            if old_shape is not None:
+                dataset[i] = dataset[i].reshape((400, ))
 
-        return np.array(processed_images)
+        # Return the dataset
+        return dataset
 
     def __repr__(self):
         return 'DenoiseProcessing'

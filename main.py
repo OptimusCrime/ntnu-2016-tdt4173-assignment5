@@ -28,7 +28,7 @@ if __name__ == '__main__':
     # model = svm(from_pickle=False)
 
     # Define the preprocessing
-    pre_processing = [BinaryPreprocessing()]
+    pre_processing = [DenoisePreprocessing(), BinaryPreprocessing()]
 
     # Loader for images/recognizer
     image_data_loader = ImageLoader(config={})
