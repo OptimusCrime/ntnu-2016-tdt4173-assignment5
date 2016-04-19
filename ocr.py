@@ -3,6 +3,9 @@ import numpy as np
 
 from PIL import Image
 from PIL import ImageDraw
+from skimage.transform import resize
+from skimage.transform import pyramid_gaussian
+from skimage import io
 
 from extract_stuff import ExtractStuff
 from load.base import BaseLoader
@@ -46,7 +49,8 @@ class OCR(object):
         log.info('Fitting model')
         model.fit(X_train, y_train)
         log.info('Predicting test set')
-        result = model.predict(X_test)
+        # result = model.predict(X_test)
+        result = None
 
         if result is not None:
             log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
@@ -67,6 +71,8 @@ class OCR(object):
 
             es = ExtractStuff()
 
+            # Define window size
+            (win_width, win_height) = (20, 20)
             # Loop the images and get fragments
             for i in range(len(images)):
                 # Shortcut images
@@ -74,8 +80,25 @@ class OCR(object):
 
                 # Get the fragments
                 log.info('Get fragments from image number %i.' % (i + 1))
-                fragments, locations = es.extract(image)
-                log.info('Got %i fragments from image number %i' % (len(fragments), (i + 1)))
+                for (index, scaled_image) in self.image_pyramid_down(image):
+                    print('Shape of scaled image', scaled_image.shape)
+                    for (x, y, window) in self.sliding_window(scaled_image, step_size=4, window_size=(win_width, win_height)):
+                        if window.shape[0] != win_height or window.shape[1] != win_width:
+                            continue
+                        # HERE WE EXECUTE PREDICT ON WINDOW
+                        import copy
+                        from skimage import io
+
+                        result = model.predict_proba([window.reshape((400, ))])
+                        max_value = result[0].max()
+                        if max_value >= 0.8:
+                            letter_index = np.argmax(result[0])
+                            print(chr(letter_index + 97))
+                            io.imshow(window)
+                            io.show()
+                        # fragments, locations = es.extract(scaled_image)
+                        # log.info('Got %i fragments from image number %i, with scale %s' % (len(fragments), (i + 1), scale))
+                exit()
 
                 # Try to predict
                 log.info('Predict on fragments')
@@ -98,15 +121,15 @@ class OCR(object):
                         letter_index = np.argmax(results[j])
 
                         print("Letter = " + str(letter_index))
-                        #print("Location = " + locations[j])
+                        print("Location = " + str(locations[j]))
 
                         dr.rectangle(((locations[j][0], locations[j][1]), (
-                                      locations[j][0] + 20, locations[j][1] + 20)), outline = "blue")
+                                locations[j][0] + 20, locations[j][1] + 20)), outline="blue")
 
 
                 # Get save path
                 save_path_split = paths[i].split('.')
-                save_path_split_clean = save_path_split[0] + '_output.' + save_path_split[1]
+                save_path_split_clean = save_path_split[0] + '_' + str(scale) + '_output.' + save_path_split[1]
 
                 im.save(save_path_split_clean, "JPEG")
 
@@ -118,3 +141,22 @@ class OCR(object):
                 })'''
 
             #print(image_data)
+
+    @staticmethod
+    def image_pyramid_down(image, downscale=1.5, min_size=(400, 400)):
+        for (i, resized) in enumerate(pyramid_gaussian(image, downscale=downscale)):
+            if resized.shape[0] < min_size[1] or resized.shape[1] < min_size[0]:
+                break
+
+            yield i, resized
+
+    @staticmethod
+    def image_pyramid_up(image, upscale=1.5, max_size=(1200, 1200)):
+        pass
+
+    @staticmethod
+    def sliding_window(image, step_size, window_size):
+        print(image.shape)
+        for y in range(0, image.shape[0], step_size):
+            for x in range(0, image.shape[1], step_size):
+                yield (x, y, image[y:y + window_size[1], x:x + window_size[0]])

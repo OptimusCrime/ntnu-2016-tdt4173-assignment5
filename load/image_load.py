@@ -14,7 +14,7 @@ IMAGELOADER_BASE_CONFIG = {
 
 class ImageLoader(BaseLoader):
     """
-    Class for loading Chars74K data set
+    Class for loading Image
     TODO: Add functionality for data augmentation
     TODO: The data set should maybe return train and test data?
     """
