@@ -5,6 +5,8 @@ import glob
 import time
 
 from skimage import io
+from skimage.util import random_noise
+
 from datetime import datetime
 from math import floor
 
@@ -16,11 +18,12 @@ log = logging.getLogger(__name__)
 __pickled_data_directory__ = os.path.join('.', 'data', 'pickled')
 
 CHARS74KLOADER_BASE_CONFIG = {
-    'percent_to_train_data': 0.9,
+    'percent_to_train_data': 0.8,
     'img_size': (20, 20),
     'images': 7112,
     'extend_data_set': True,
-    'from_pickle': False
+    'from_pickle': False,
+    'noise_types': ['s&p', 'gaussian', 'poisson']
 }
 
 
@@ -48,23 +51,29 @@ class Chars74KLoader(BaseLoader):
                 log.error('Unable to load pickled file, getting default data instead')
 
         image_paths, image_labels = self.get_all_image_paths()
-        # data_image_vectors = np.zeros((len(image_paths),) + self.config['img_size'])  # Use if 2D array is wanted
-        # image_vectors = np.zeros((len(image_paths),) + (self.config['img_size'][0] ** 2,))  # 7112 * 20^2
-        image_matrixes = []
+        image_matrices = []
         all_labels = []
+
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-            raw_image = raw_image / 255.0
-            image_matrixes.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
+            raw_image = raw_image / 255.0  # Normalize image by dividing image by 255.0
+            image_matrices.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
             all_labels.append(image_labels[index])
             if self.config['extend_data_set']:
+                # Add noisy images
+                for noise in self.config['noise_types']:
+                    noisy_img = random_noise(raw_image, mode=noise)
+                    image_matrices.append(noisy_img.reshape((400, )))
+                    all_labels.append(image_labels[index])
+
+                # Add shifted images
                 shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
                 for image in shifted_images:
-                    image_matrixes.append(image.reshape((400, )))
+                    image_matrices.append(image.reshape((400, )))
                     all_labels.append(image_labels[index])
-            # image_vectors[index] = raw_image.reshape(self.config['img_size'][0] ** 2)  # Reshape to 1D vector of length 20^2
+
         # Split data set into (X_train, y_train, X_test and y_test)
-        dataset_tuple = self.split_data_set(image_matrixes, all_labels)
+        dataset_tuple = self.split_data_set(image_matrices, all_labels)
 
         self.save_data_set_to_pickle(dataset_tuple)
         log.info('Loaded %i images of %s pixels' % (len(all_labels), self.config['img_size']))

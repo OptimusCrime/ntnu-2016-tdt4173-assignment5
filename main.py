@@ -20,7 +20,7 @@ if __name__ == '__main__':
 
     training_loader = Chars74KLoader(config={
         'from_pickle': True,
-        'percent_to_train_data': 0.9
+        'percent_to_train_data': 0.8
     })
 
     # Define the model

@@ -54,7 +54,7 @@ class OCR(object):
         # Test with kNN
         log.info('Fitting model')
         model.fit(X_train, y_train)
-        log.info('Predicting test set')
+        log.info('Predicting test set of size: %i' % len(X_test))
         result = model.predict(X_test)
         # result = None
 
