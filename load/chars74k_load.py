@@ -3,10 +3,11 @@ import os
 import numpy as np
 import glob
 import time
+from math import floor
+from datetime import datetime
 
 from skimage import io
-from datetime import datetime
-from math import floor
+from skimage.util import random_noise
 
 from load.pickling import pickle_data, unpickle_data
 from load.base import BaseLoader
@@ -15,70 +16,75 @@ log = logging.getLogger(__name__)
 
 __pickled_data_directory__ = os.path.join('.', 'data', 'pickled')
 
-CHARS74KLOADER_BASE_CONFIG = {
-    'percent_to_train_data': 0.9,
+CHARS74K_LOADER_BASE_CONFIG = {
+    'percent_to_train_data': 0.8,
     'img_size': (20, 20),
     'images': 7112,
     'extend_data_set': True,
-    'from_pickle': False
+    'from_pickle': False,
+    'noise_types': ('s&p', 'gaussian', 'poisson')  # Salt&Pepper, Gaussian, Poisson
 }
 
 
 class Chars74KLoader(BaseLoader):
     """
     Class for loading Chars74K data set
-    TODO: Add functionality for data augmentation
-    TODO: The data set should maybe return train and test data?
     """
-    def __init__(self, config=CHARS74KLOADER_BASE_CONFIG):
+    def __init__(self, config=CHARS74K_LOADER_BASE_CONFIG):
         self.root_directory = os.path.abspath('data/chars74k-lite')
-        self.config = CHARS74KLOADER_BASE_CONFIG
+        self.config = CHARS74K_LOADER_BASE_CONFIG
         self.config.update(config)
+        self._log = logging.getLogger(__name__)
 
     def load(self):
-        log.info('Initiating load of Chars74K data set')
+        self._log.info('Initiating load of Chars74K data set')
         # If from_pickle, then load the data from pickled file
         # Create pickled file otherwise
         if self.config['from_pickle']:
             data = self.load_data_set_from_pickle()
             if data:
-                log.info('Loaded %i images of %s pixels from pickled file' % (len(data[0]) + len(data[2]), self.config['img_size']))
+                self._log.info('Loaded %i images of %s pixels from pickled file' % (len(data[0]) + len(data[2]), self.config['img_size']))
                 return data  # Tuple of (NP_Array(Vectors) / Array(Labels))
             else:
-                log.error('Unable to load pickled file, getting default data instead')
+                self._log.error('Unable to load pickled file, getting default data instead')
 
         image_paths, image_labels = self.get_all_image_paths()
-        # data_image_vectors = np.zeros((len(image_paths),) + self.config['img_size'])  # Use if 2D array is wanted
-        # image_vectors = np.zeros((len(image_paths),) + (self.config['img_size'][0] ** 2,))  # 7112 * 20^2
-        image_vectors = []
+        image_matrices = []
         all_labels = []
+
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-            raw_image = raw_image / 255.0
-            image_vectors.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
+            raw_image = raw_image / 255.0  # Normalize image by dividing image by 255.0
+            image_matrices.append(raw_image.reshape((self.config['img_size'][0] ** 2)))
             all_labels.append(image_labels[index])
             if self.config['extend_data_set']:
+                # Add noisy images
+                for noise in self.config['noise_types']:
+                    noisy_img = random_noise(raw_image, mode=noise)
+                    image_matrices.append(noisy_img.reshape((400, )))
+                    all_labels.append(image_labels[index])
+
+                # Add shifted images
                 shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
                 for image in shifted_images:
-                    image_vectors.append(image.reshape((self.config['img_size'][0] ** 2)))
+                    image_matrices.append(image.reshape((400, )))
                     all_labels.append(image_labels[index])
-            # image_vectors[index] = raw_image.reshape(self.config['img_size'][0] ** 2)  # Reshape to 1D vector of length 20^2
-        # Split data set into (X_train, y_train, X_test and y_test)
-        image_vectors = np.array(image_vectors)
-        dataset_tuple = self.split_data_set(image_vectors, all_labels)
 
-        self.save_data_set_to_pickle(dataset_tuple)
-        log.info('Loaded %i images of %s pixels' % (len(image_labels), self.config['img_size']))
-        return dataset_tuple
+        # Split data set into (X_train, y_train, X_test and y_test)
+        data_set_tuple = self.split_data_set(image_matrices, all_labels)
+
+        self.save_data_set_to_pickle(data_set_tuple)
+        log.info('Loaded %i images of %s pixels' % (len(all_labels), self.config['img_size']))
+        return data_set_tuple
 
     def split_data_set(self, vectors, labels):
         """
         Split data set into (X_train, y_train, X_test and y_test) using the
         percent_as_test_data value.
         Return it as a tuple (X_train, y_train, X_test and y_test)
-        :param vectors:
-        :param labels:
-        :return:
+        :param vectors: A list of images
+        :param labels: A list of labels
+        :return: Splitted  data
         """
         num_of_images = len(vectors)
         num_of_train_data = floor(self.config['percent_to_train_data'] * num_of_images)
@@ -106,30 +112,32 @@ class Chars74KLoader(BaseLoader):
         return image_paths, image_labels
 
     @staticmethod
-    def save_data_set_to_pickle(payload, filename=None):
+    def save_data_set_to_pickle(pay_load, file_name=None):
         """
         Saves data to a GZipped binary dump of the data set
+        :param file_name:
+        :param pay_load:
         """
-        if not filename:
-            filename = '%s%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
-            filename = os.path.join(__pickled_data_directory__, filename)
+        if not file_name:
+            file_name = '%s%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
+            file_name = os.path.join(__pickled_data_directory__, file_name)
 
-        pickle_data(payload, filename)
-        log.debug('Saved data set to file: %s' % filename)
-
+        pickle_data(pay_load, file_name)
+        log.debug('Saved data set to file: %s' % file_name)
 
     @staticmethod
-    def load_data_set_from_pickle(filename=None):
+    def load_data_set_from_pickle(file_name=None):
         """
         Loads data from a GZipped binary dump of the data set
         Takes thw newest if no file name is provided
+        :param file_name:
         """
-        if not filename:
+        if not file_name:
             try:
-                filename = max(glob.glob(os.path.join(__pickled_data_directory__, '*.chars74k-lite.gz')), key=os.path.getctime)
+                file_name = max(glob.glob(os.path.join(__pickled_data_directory__, '*.chars74k-lite.gz')), key=os.path.getctime)
             except ValueError as e:
                 log.error('Unable to load data set from file since no pickled files could be found, ')
                 return None
 
-        log.debug('Loading data set from file: %s' % filename)
-        return unpickle_data(filename)
+        log.debug('Loading data set from file: %s' % file_name)
+        return unpickle_data(file_name)

@@ -1,12 +1,10 @@
 import logging
 import os
+import numpy as np
 from skimage import io
-
 from load.base import BaseLoader
 
-log = logging.getLogger(__name__)
-
-IMAGELOADER_BASE_CONFIG = {
+IMAGE_LOADER_BASE_CONFIG = {
     'normalize': True,
     'from_pickle': False
 }
@@ -14,17 +12,16 @@ IMAGELOADER_BASE_CONFIG = {
 
 class ImageLoader(BaseLoader):
     """
-    Class for loading Chars74K data set
-    TODO: Add functionality for data augmentation
-    TODO: The data set should maybe return train and test data?
+    Class for loading Image
     """
-    def __init__(self, config=IMAGELOADER_BASE_CONFIG):
+    def __init__(self, config=IMAGE_LOADER_BASE_CONFIG):
         self.root_directory = os.path.abspath('data/images')
-        self.config = IMAGELOADER_BASE_CONFIG
+        self.config = IMAGE_LOADER_BASE_CONFIG
         self.config.update(config)
+        self._log = logging.getLogger(__name__)
 
     def load(self):
-        log.info('Initiating load of images to recognize')
+        self._log.info('Initiating load of images to recognize')
 
         # Get all paths
         image_paths = self.get_files()
@@ -33,17 +30,21 @@ class ImageLoader(BaseLoader):
         images = []
         for index in range(len(image_paths)):
             raw_image = io.imread(image_paths[index], as_grey=True)  # As grey to get 2D without RGB
-
-            # Add new image and reshape
+            if raw_image.dtype == np.uint8:
+                raw_image = raw_image / 255.0
             images.append(raw_image)
-
+            # Add new image and reshape
         # Debug
-        log.info('Loaded %i image(s) to recognize' % (len(images)))
+        self._log.info('Loaded %i image(s) to recognize' % (len(images)))
 
         # Return the images and the shapes
         return images, image_paths
 
     def get_files(self):
+        """
+        Returns all possible images to perform recognition on
+        :return: Paths for every image
+        """
         image_paths = []
         for directory_name, subdirectory_list, file_list in os.walk(self.root_directory):
             for file_name in file_list:
