@@ -1,12 +1,21 @@
 import logging
+import time
+import glob
+import os
 import numpy as np
 
 from PIL import Image
 from PIL import ImageDraw
+from datetime import datetime
+from load.pickling import pickle_data, unpickle_data
 from skimage.transform import pyramid_gaussian
+from sklearn.metrics import classification_report, confusion_matrix
 
 from load.base import BaseLoader
 from preprocessing.base import BasePreprocessing
+
+np.set_printoptions(linewidth=200)
+__pickled_data_directory__ = os.path.join('.', 'data', 'pickled-classifier')
 
 OCR_BASE_CONFIG = {
     'window_size': (20, 20),
@@ -25,22 +34,17 @@ class OCR(object):
         if not isinstance(training_data_loader, BaseLoader):
             raise ValueError('"training_data_loader" must be of type BaseLoader')
 
-        if not model:
-            raise ValueError('"model" cannot be None')
-
         self._log.info('Initiating OCR')
 
         self.config = OCR_BASE_CONFIG
         self.config.update(config)
 
-        # Set some variables
         self.training_data_loader = training_data_loader
-        self.model = model
 
         # Load the training data. Returned as (X_train, y_train, X_test, y_test)
         X_train, y_train, X_test, y_test = self.training_data_loader.load()
 
-        # Check if any pre-processing was supplied. Run if supplied.
+        # Check if any pre-processing was supplied . Run if supplied.
         if isinstance(preprocessing, list):
             for processing in preprocessing:
                 if isinstance(processing, BasePreprocessing):
@@ -48,17 +52,29 @@ class OCR(object):
                     X_train = processing.process(X_train)
                     X_test = processing.process(X_test)
 
-        # Train the model
-        self._log.info('Starting fitting of model')
-        model.fit(X_train, y_train)
-        self._log.info('Done fitting model')
+        self.model = model
+        if self.model is not None:
+            self._log.info('Starting fitting of model')
+            model.fit(X_train, y_train)
+            self._log.info('Done fitting model')
+            self._log.info('Saving model ')
+            self.save_classifier_to_pickle(model)
+            self._log.info('Saved model')
+        else:
+            self._log.info('Loading classifier from pickled file')
+            model = self.load_classifier_from_pickle()
+            # If no model found from pickled models
+            if not model:
+                raise ValueError('no classifier found from pickled files and model cannot be None')
 
         # To a prediction to get correctness of model
         if self.config['do_initial_prediction']:
             self._log.info('Predicting test set of size: %i' % len(X_test))
             result = model.predict(X_test)
-            if result is not None:
-                self._log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
+            self._log.info('Classification report %s\n%s' % (model, classification_report(y_test, result)))
+            self._log.info('Confussion matrix: \n%s' % confusion_matrix(y_test, result))
+            # if result is not None:
+            #     self._log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
 
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
@@ -114,6 +130,35 @@ class OCR(object):
         for y in range(0, image.shape[0], step_size):
             for x in range(0, image.shape[1], step_size):
                 yield (y, x, image[y:(y + window_size[1]), x:(x + window_size[0])])
+
+    def save_classifier_to_pickle(self, pay_load, file_name=None):
+        """
+        Saves data to a GZipped binary dump of the data set
+        :param file_name:
+        :param pay_load:
+        """
+        if not file_name:
+            file_name = '%s%f.classifier.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
+            file_name = os.path.join(__pickled_data_directory__, file_name)
+
+        pickle_data(pay_load, file_name)
+        self._log.debug('Saved classifier to file: %s' % file_name)
+
+    def load_classifier_from_pickle(self, file_name=None):
+        """
+        Loads data from a GZipped binary dump of the data set
+        Takes thw newest if no file name is provided
+        :param file_name:
+        """
+        if not file_name:
+            try:
+                file_name = max(glob.glob(os.path.join(__pickled_data_directory__, '*.classifier.gz')), key=os.path.getctime)
+            except ValueError as e:
+                self._log.error('Unable to load classifier from file since no pickled files could be found, ')
+                return None
+
+        self._log.debug('Loading classifier from file: %s' % file_name)
+        return unpickle_data(file_name)
 
     @staticmethod
     def image_pyramid_down(image, downscale=1.5, min_size=(30, 30)):

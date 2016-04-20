@@ -14,7 +14,7 @@ from load.base import BaseLoader
 
 log = logging.getLogger(__name__)
 
-__pickled_data_directory__ = os.path.join('.', 'data', 'pickled')
+__pickled_data_directory__ = os.path.join('.', 'data', 'pickled-data-set')
 
 CHARS74K_LOADER_BASE_CONFIG = {
     'percent_to_train_data': 0.8,

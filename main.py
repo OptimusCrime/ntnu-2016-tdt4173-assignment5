@@ -19,8 +19,10 @@ if __name__ == '__main__':
 
     # Loader for training set
     training_loader = Chars74KLoader(config={
-        'from_pickle': False,
-        'percent_to_train_data': 0.8
+        'from_pickle': True,
+        'percent_to_train_data': 0.8,
+        'extend_data_set': True,
+        'noise_types': ('s&p', 'gaussian', 'poisson')
     })
 
     # Loader for images/recognizer
@@ -28,10 +30,11 @@ if __name__ == '__main__':
 
     # Define the model
     # model = svm()
-    model = knn()
+    # model = knn()
+    model = None
 
     # Define the pre-processing
-    pre_processing = [DenoiseProcessing(), BinaryProcessing()]
+    pre_processing = [BinaryProcessing()]
 
     # Call the OCR
     ocr = OCR(model=model,
@@ -39,7 +42,7 @@ if __name__ == '__main__':
               preprocessing=pre_processing,
               image_data_loader=image_data_loader,
               config={
-                  'do_initial_prediction': False,
+                  'do_initial_prediction': True,
                   'prediction_threshold': 0.85,
-                  'window_content': 10,
+                  'window_content': 80,
               })
