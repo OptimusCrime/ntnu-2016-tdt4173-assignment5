@@ -25,6 +25,7 @@ OCR_BASE_CONFIG = {
     'sliding_window_step_size': 4,
     'prediction_threshold': 0.9,
     'window_content': 90,
+    'window_intensity': 0.95,
     'do_initial_prediction': True,
     'pre_processing': None,
     'data_from_pickle': False,
@@ -93,19 +94,13 @@ class OCR(object):
             result = self.model.predict(X_test)
             self._log.info('Classification report %s\n%s' % (self.model, classification_report(y_test, result)))
             self._log.info('Confusion matrix:\n%s' % confusion_matrix(y_test, result))
-            # if result is not None:
-            #     self._log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
+            if result is not None:
+                 self._log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
 
         # Try to recognize letters on images in recognize
         if image_data_loader is not None and isinstance(image_data_loader, BaseLoader):
             # Load the images
             images, paths = image_data_loader.load()
-
-            if isinstance(self.pre_processing, list):
-                for processing in self.pre_processing:
-                    if isinstance(processing, BasePreprocessing):
-                        self._log.info('Pre-processing images with %s technique' % repr(processing))
-                        images = processing.process(images)
 
             # Loop the images and get fragments
             for i in range(len(images)):
@@ -126,9 +121,22 @@ class OCR(object):
                     if window.shape[0] != self.config['window_size'][1] or window.shape[1] != self.config['window_size'][0]:
                         continue
 
+                    window_reshaped = window.reshape((400, ))
+                    found = 0
+                    for j in range(400):
+                        if window_reshaped[j] <= self.config['window_intensity']:
+                            found += 1
+
                     # Here we execute the prediction
-                    if np.count_nonzero(window) > 0 and np.count_nonzero(window) >= self.config['window_content']:
-                        result = self.model.predict_proba([window.reshape((400, ))])
+                    if found >= self.config['window_content']:
+                        # Run the preprocessing on the window
+                        if isinstance(self.pre_processing, list):
+                            for processing in self.pre_processing:
+                                if isinstance(processing, BasePreprocessing):
+                                    window_reshaped = processing.process([window_reshaped])[0]
+
+                        # Predict the probability
+                        result = self.model.predict_proba([window_reshaped])
                         max_value = result[0].max()
                         if max_value >= self.config['prediction_threshold']:
                             letter_index = np.argmax(result)
@@ -158,7 +166,7 @@ class OCR(object):
                 im.save(save_path_split_clean, "JPEG")
 
                 # Save gif
-                writeGif(save_path_split_clean + '_animated.gif', gif_frames_raw, duration=0.5, dither=0)
+                writeGif(save_path_split[0] + '_animated.gif', gif_frames_raw, duration=0.25, dither=0)
 
                 # Debug
                 self._log.info('Got the following classifications (%i): %s' % (len(classifications), [i for i in classifications]))
