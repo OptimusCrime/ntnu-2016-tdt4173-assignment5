@@ -21,7 +21,6 @@ CHARS74K_LOADER_BASE_CONFIG = {
     'img_size': (20, 20),
     'images': 7112,
     'extend_data_set': True,
-    'from_pickle': False,
     'noise_types': ('s&p', 'gaussian', 'poisson')  # Salt&Pepper, Gaussian, Poisson
 }
 
@@ -38,15 +37,6 @@ class Chars74KLoader(BaseLoader):
 
     def load(self):
         self._log.info('Initiating load of Chars74K data set')
-        # If from_pickle, then load the data from pickled file
-        # Create pickled file otherwise
-        if self.config['from_pickle']:
-            data = self.load_data_set_from_pickle()
-            if data:
-                self._log.info('Loaded %i images of %s pixels from pickled file' % (len(data[0]) + len(data[2]), self.config['img_size']))
-                return data  # Tuple of (NP_Array(Vectors) / Array(Labels))
-            else:
-                self._log.error('Unable to load pickled file, getting default data instead')
 
         image_paths, image_labels = self.get_all_image_paths()
         image_matrices = []
@@ -65,15 +55,13 @@ class Chars74KLoader(BaseLoader):
                     all_labels.append(image_labels[index])
 
                 # Add shifted images
-                shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
-                for image in shifted_images:
-                    image_matrices.append(image.reshape((400, )))
-                    all_labels.append(image_labels[index])
+                # shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
+                # for image in shifted_images:
+                #     image_matrices.append(image.reshape((400, )))
+                #     all_labels.append(image_labels[index])
 
         # Split data set into (X_train, y_train, X_test and y_test)
         data_set_tuple = self.split_data_set(image_matrices, all_labels)
-
-        self.save_data_set_to_pickle(data_set_tuple)
         log.info('Loaded %i images of %s pixels' % (len(all_labels), self.config['img_size']))
         return data_set_tuple
 
@@ -119,7 +107,7 @@ class Chars74KLoader(BaseLoader):
         :param pay_load:
         """
         if not file_name:
-            file_name = '%s%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
+            file_name = '%s.%f.chars74k-lite.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
             file_name = os.path.join(__pickled_data_directory__, file_name)
 
         pickle_data(pay_load, file_name)

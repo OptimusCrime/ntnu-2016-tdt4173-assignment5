@@ -8,6 +8,7 @@ from PIL import Image
 from PIL import ImageDraw
 from datetime import datetime
 from load.pickling import pickle_data, unpickle_data
+from load.chars74k_load import Chars74KLoader
 from skimage.transform import pyramid_gaussian
 from sklearn.metrics import classification_report, confusion_matrix
 
@@ -22,57 +23,72 @@ OCR_BASE_CONFIG = {
     'sliding_window_step_size': 4,
     'prediction_threshold': 0.9,
     'window_content': 90,
-    'do_initial_prediction': True
+    'do_initial_prediction': True,
+    'pre_processing': None,
+    'data_from_pickle': False,
+    'model_from_pickle': False
 }
 
 
 class OCR(object):
 
-    def __init__(self, model=None, training_data_loader=None, preprocessing=None, image_data_loader=None, config=OCR_BASE_CONFIG):
+    def __init__(self, training_data_loader=None, image_data_loader=None,  model=None, config=OCR_BASE_CONFIG):
         self._log = logging.getLogger(__name__)
-        # Make sure we have a loader
-        if not isinstance(training_data_loader, BaseLoader):
-            raise ValueError('"training_data_loader" must be of type BaseLoader')
-
         self._log.info('Initiating OCR')
 
         self.config = OCR_BASE_CONFIG
         self.config.update(config)
 
-        self.training_data_loader = training_data_loader
+        # Make sure we have a loader
+        if not isinstance(training_data_loader, BaseLoader):
+            if not self.config['data_from_pickle']:
+                raise ValueError('When data_from_pickle is false; "training_data_loader" must be of type BaseLoader')
 
-        # Load the training data. Returned as (X_train, y_train, X_test, y_test)
-        X_train, y_train, X_test, y_test = self.training_data_loader.load()
+        self.pre_processing = self.config['pre_processing']
 
-        # Check if any pre-processing was supplied . Run if supplied.
-        if isinstance(preprocessing, list):
-            for processing in preprocessing:
-                if isinstance(processing, BasePreprocessing):
-                    self._log.info('Pre-processing data set with %s technique' % repr(processing))
-                    X_train = processing.process(X_train)
-                    X_test = processing.process(X_test)
+        if not self.config['data_from_pickle']:
+            self.training_data_loader = training_data_loader
+            X_train, y_train, X_test, y_test = self.training_data_loader.load()
+            # Check if any pre-processing was supplied. Run if supplied.
+            if isinstance(self.pre_processing, list):
+                for processing in self.pre_processing:
+                    if isinstance(processing, BasePreprocessing):
+                        self._log.info('Pre-processing data set with %s technique' % repr(processing))
+                        X_train = processing.process(X_train)
+                        X_test = processing.process(X_test)
+            # Save data set to pickled file
+            self._log.info('Saving pre-processed data set to pickled file')
+            Chars74KLoader.save_data_set_to_pickle((X_train, y_train, X_test, y_test))
+            self._log.info('Saved pre-processed data set to pickled fie')
+        else:
+            self._log.info('Loading data set from pickled file')
+            try:
+                X_train, y_train, X_test, y_test = Chars74KLoader.load_data_set_from_pickle()
+            except TypeError:
+                raise TypeError('no data set found from pickled files and data set cannot be None')
 
-        self.model = model
-        if self.model is not None:
+        # If model should not be loaded from pickled file
+        if not self.config['model_from_pickle']:
+            self.model = model
             self._log.info('Starting fitting of model')
-            model.fit(X_train, y_train)
+            self.model.fit(X_train, y_train)
             self._log.info('Done fitting model')
             self._log.info('Saving model ')
-            self.save_classifier_to_pickle(model)
+            self.save_classifier_to_pickle(self.model)
             self._log.info('Saved model')
         else:
             self._log.info('Loading classifier from pickled file')
-            model = self.load_classifier_from_pickle()
+            self.model = self.load_classifier_from_pickle()
             # If no model found from pickled models
-            if not model:
+            if not self.model:
                 raise ValueError('no classifier found from pickled files and model cannot be None')
 
         # To a prediction to get correctness of model
         if self.config['do_initial_prediction']:
             self._log.info('Predicting test set of size: %i' % len(X_test))
-            result = model.predict(X_test)
-            self._log.info('Classification report %s\n%s' % (model, classification_report(y_test, result)))
-            self._log.info('Confussion matrix: \n%s' % confusion_matrix(y_test, result))
+            result = self.model.predict(X_test)
+            self._log.info('Classification report %s\n%s' % (self.model, classification_report(y_test, result)))
+            self._log.info('Confusion matrix:\n%s' % confusion_matrix(y_test, result))
             # if result is not None:
             #     self._log.info('%.2f percent correct' % (sum([1 if result[i] == y_test[i] else 0 for i in range(len(result))]) / len(result) * 100))
 
@@ -81,8 +97,8 @@ class OCR(object):
             # Load the images
             images, paths = image_data_loader.load()
 
-            if isinstance(preprocessing, list):
-                for processing in preprocessing:
+            if isinstance(self.pre_processing, list):
+                for processing in self.pre_processing:
                     if isinstance(processing, BasePreprocessing):
                         self._log.info('Pre-processing images with %s technique' % repr(processing))
                         images = processing.process(images)
@@ -104,7 +120,7 @@ class OCR(object):
 
                     # Here we execute the prediction
                     if np.count_nonzero(window) > 0 and np.count_nonzero(window) >= self.config['window_content']:
-                        result = model.predict_proba([window.reshape((400, ))])
+                        result = self.model.predict_proba([window.reshape((400, ))])
                         max_value = result[0].max()
                         if max_value >= self.config['prediction_threshold']:
                             letter_index = np.argmax(result)
@@ -138,7 +154,7 @@ class OCR(object):
         :param pay_load:
         """
         if not file_name:
-            file_name = '%s%f.classifier.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock())
+            file_name = '%s.%f.%s.classifier.gz' % (datetime.now().strftime('%Y-%m-%d'), time.clock(), pay_load.__class__.__name__)
             file_name = os.path.join(__pickled_data_directory__, file_name)
 
         pickle_data(pay_load, file_name)
