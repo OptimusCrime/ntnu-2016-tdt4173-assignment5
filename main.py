@@ -30,12 +30,12 @@ if __name__ == '__main__':
 
     ocr_configuration = {
         'pre_processing': [BinaryProcessing()],
-        'do_initial_prediction': False,
+        'do_initial_prediction': True,
         'prediction_threshold': 0.91,
         'window_content': 110,
         'window_intensity': 0.9,
-        'data_from_pickle': True,
-        'model_from_pickle': True,
+        'data_from_pickle': False,
+        'model_from_pickle': False,
         'sliding_window_step_size': 2,
     }
 
