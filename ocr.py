@@ -1,19 +1,21 @@
+import copy
+from datetime import datetime
 import logging
 import time
 import glob
 import os
 import numpy as np
+from random import randint
 
-from PIL import Image
-from PIL import ImageDraw
-from datetime import datetime
-from load.pickling import pickle_data, unpickle_data
-from load.chars74k_load import Chars74KLoader
+from PIL import Image, ImageDraw, ImageFont, ImageSequence
 from skimage.transform import pyramid_gaussian
 from sklearn.metrics import classification_report, confusion_matrix
 
+from load.pickling import pickle_data, unpickle_data
+from load.chars74k_load import Chars74KLoader
 from load.base import BaseLoader
 from preprocessing.base import BasePreprocessing
+from scripts.images2gif import writeGif
 
 np.set_printoptions(linewidth=200)
 __pickled_data_directory__ = os.path.join('.', 'data', 'pickled-classifier')
@@ -111,8 +113,12 @@ class OCR(object):
                 image = images[i]
                 classifications = []
 
+                # Open the image to draw on
                 im = Image.open(paths[i])
                 dr = ImageDraw.Draw(im)
+
+                # For the gif
+                gif_frames_raw = [copy.deepcopy(im)]
 
                 # Get the fragments / sub-windows
                 self._log.info('Generating fragments from image (%i): %s' % (i + 1, paths[i].split('/')[-1]))
@@ -127,14 +133,35 @@ class OCR(object):
                         if max_value >= self.config['prediction_threshold']:
                             letter_index = np.argmax(result)
                             letter = chr(letter_index + 97)  # Get the predicted character
-                            classifications.append((letter, result[0]))  # Append tuple of character and probability
+                            current_classification = {
+                                'letter': letter,
+                                'probability': round((max_value * 100), 2),
+                                'location': '(' + str(x) + ', ' + str(y) + ')'
+                            }
+                            classifications.append(current_classification)  # Append current classification
+
+                            # Gif stuff goes here
+                            im_gif = Image.open(paths[i])
+                            dr_gif = ImageDraw.Draw(im_gif)
+                            dr_gif.rectangle(((x, y), (x + 20, y + 20)), outline="blue")
+                            font = ImageFont.truetype("font/arial.ttf", 35)
+                            dr_gif.text((x - 20, y), letter, (randint(0, 255), randint(0, 255), randint(0, 255)),
+                                        font=font)
+                            gif_frames_raw.append(im_gif)
+
+                            # Add rectangle to the output
                             dr.rectangle(((x, y), (x + 20, y + 20)), outline="blue")
 
                 # Get save path
                 save_path_split = paths[i].split('.')
                 save_path_split_clean = save_path_split[0] + '_output.' + save_path_split[1]
                 im.save(save_path_split_clean, "JPEG")
-                self._log.info('Got the following classifications (%i): %s' % (len(classifications), [i[0] for i in classifications]))
+
+                # Save gif
+                writeGif(save_path_split_clean + '_animated.gif', gif_frames_raw, duration=0.5, dither=0)
+
+                # Debug
+                self._log.info('Got the following classifications (%i): %s' % (len(classifications), [i for i in classifications]))
 
     def sliding_window(self, image, step_size, window_size):
         """
