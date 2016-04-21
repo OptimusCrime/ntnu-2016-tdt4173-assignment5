@@ -9,5 +9,6 @@ data/images/*.jpg
 data/pickled-data-set/*.chars74k-lite.gz
 data/pickled-classifier/*.classifier.gz
 data/*.jpg
+data/*.gif
 
 logs/debug*.log
