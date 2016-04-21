@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 def k_nearest_neighbours(from_pickle=False):
     log.info('Initiating kNN model')
-    return neighbors.KNeighborsClassifier(n_neighbors=5)
+    return neighbors.KNeighborsClassifier(n_neighbors=3)
 
 
 def support_vector_machine(from_pickle=False):

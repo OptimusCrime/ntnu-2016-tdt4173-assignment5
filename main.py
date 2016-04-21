@@ -25,16 +25,16 @@ if __name__ == '__main__':
     training_loader = Chars74KLoader(config={
         'percent_to_train_data': 0.8,
         'extend_data_set': True,
-        'noise_types': ('gaussian', 's&p')
+        'noise_types': ('gaussian', 's&p', 'poisson')
     })
 
     ocr_configuration = {
         'pre_processing': [BinaryProcessing()],
-        'do_initial_prediction': False,
+        'do_initial_prediction': True,
         'prediction_threshold': 0.85,
-        'window_content': 80,
-        'data_from_pickle': True,
-        'model_from_pickle': True
+        'window_content': 90,
+        'data_from_pickle': False,
+        'model_from_pickle': False
     }
 
     # Define the model

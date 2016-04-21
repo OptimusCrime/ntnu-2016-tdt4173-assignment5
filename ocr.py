@@ -66,6 +66,7 @@ class OCR(object):
                 X_train, y_train, X_test, y_test = Chars74KLoader.load_data_set_from_pickle()
             except TypeError:
                 raise TypeError('no data set found from pickled files and data set cannot be None')
+            self._log.info('Loaded data set of size: %s' % str(len(y_train) + len(y_test)))
 
         # If model should not be loaded from pickled file
         if not self.config['model_from_pickle']:
@@ -79,6 +80,7 @@ class OCR(object):
         else:
             self._log.info('Loading classifier from pickled file')
             self.model = self.load_classifier_from_pickle()
+            self._log.info('Loaded %s from pickled file' % self.model.__class__.__name__)
             # If no model found from pickled models
             if not self.model:
                 raise ValueError('no classifier found from pickled files and model cannot be None')

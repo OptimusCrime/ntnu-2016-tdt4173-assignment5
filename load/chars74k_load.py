@@ -8,6 +8,7 @@ from datetime import datetime
 
 from skimage import io
 from skimage.util import random_noise
+from skimage import transform
 
 from load.pickling import pickle_data, unpickle_data
 from load.base import BaseLoader
@@ -55,10 +56,10 @@ class Chars74KLoader(BaseLoader):
                     all_labels.append(image_labels[index])
 
                 # Add shifted images
-                # shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(raw_image.ndim)]
-                # for image in shifted_images:
-                #     image_matrices.append(image.reshape((400, )))
-                #     all_labels.append(image_labels[index])
+                shifted_images = [np.roll(raw_image, 1, axis=i) for i in range(-1, 2)]
+                for image in shifted_images:
+                    image_matrices.append(image.reshape((400, )))
+                    all_labels.append(image_labels[index])
 
         # Split data set into (X_train, y_train, X_test and y_test)
         data_set_tuple = self.split_data_set(image_matrices, all_labels)
